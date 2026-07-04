@@ -11,7 +11,7 @@ from langchain_core.documents import Document
 from loguru import logger
 
 from app.core.config import settings
-from app.core.exceptions import ValidationException
+from app.core.exceptions import ValidationException, VectorStoreNotReadyException
 
 if TYPE_CHECKING:
     from app.rag.embeddings import EmbeddingFactory
@@ -68,6 +68,12 @@ class PortfolioRetriever:
         cleaned_query = query.strip()
         if not cleaned_query:
             raise ValidationException("The search query cannot be empty.")
+
+        if not self._vector_store_manager.index_exists():
+            raise VectorStoreNotReadyException(
+                "The knowledge base is not ready yet. Build the FAISS index locally and deploy "
+                "the generated files, or run ingestion in an environment where it is enabled."
+            )
 
         embeddings = self._embedding_factory.create()
         vector_store = self._vector_store_manager.load(embeddings)

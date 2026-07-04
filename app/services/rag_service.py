@@ -2,18 +2,23 @@
 Service layer for portfolio knowledge-base ingestion.
 Coordinates the lower RAG components while keeping API routes thin.
 """
+from __future__ import annotations
+
 from pathlib import Path
 from time import perf_counter
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
 from app.core.config import settings
 from app.core.exceptions import IngestionException, NotFoundException
 from app.models.schemas.ingest import IngestSummary
-from app.rag.embeddings import EmbeddingFactory
 from app.rag.loader import DocumentLoader
 from app.rag.splitter import DocumentSplitter
-from app.rag.vectorstore import VectorStoreManager
+
+if TYPE_CHECKING:
+    from app.rag.embeddings import EmbeddingFactory
+    from app.rag.vectorstore import VectorStoreManager
 
 
 class RAGService:
@@ -32,10 +37,19 @@ class RAGService:
         """
         Injects all RAG dependencies so the service remains easy to test and extend.
         """
+        if embedding_factory is None:
+            from app.rag.embeddings import EmbeddingFactory
+
+            embedding_factory = EmbeddingFactory()
+        if vector_store_manager is None:
+            from app.rag.vectorstore import VectorStoreManager
+
+            vector_store_manager = VectorStoreManager()
+
         self._loader = loader or DocumentLoader()
         self._splitter = splitter or DocumentSplitter()
-        self._embedding_factory = embedding_factory or EmbeddingFactory()
-        self._vector_store_manager = vector_store_manager or VectorStoreManager()
+        self._embedding_factory = embedding_factory
+        self._vector_store_manager = vector_store_manager
         self._knowledge_dir = Path(knowledge_dir or settings.knowledge_dir_path).resolve()
 
     def ingest_knowledge_base(self, rebuild_index: bool = True) -> IngestSummary:

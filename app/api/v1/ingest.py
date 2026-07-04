@@ -2,7 +2,10 @@
 Knowledge-base ingestion API route.
 Exposes the RAG indexing workflow without leaking business logic into the route layer.
 """
+from __future__ import annotations
+
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Body, Depends
 
@@ -10,7 +13,9 @@ from app.core.config import settings
 from app.core.exceptions import FeatureDisabledException
 from app.models.schemas.ingest import IngestRequest, IngestSummary
 from app.models.schemas.response import BaseAPIResponse
-from app.services.rag_service import RAGService
+
+if TYPE_CHECKING:
+    from app.services.rag_service import RAGService
 
 router = APIRouter()
 
@@ -20,6 +25,8 @@ def get_rag_service() -> RAGService:
     """
     Factory dependency for the ingestion service.
     """
+    from app.services.rag_service import RAGService
+
     return RAGService()
 
 

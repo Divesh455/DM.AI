@@ -2,13 +2,18 @@
 Chat API route for portfolio question answering.
 This route stays thin and delegates RAG orchestration to the chat service layer.
 """
+from __future__ import annotations
+
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
 from app.models.schemas.chat import ChatRequest, ChatResponse
 from app.models.schemas.response import BaseAPIResponse
-from app.services.chat_service import ChatService
+
+if TYPE_CHECKING:
+    from app.services.chat_service import ChatService
 
 router = APIRouter()
 
@@ -18,6 +23,8 @@ def get_chat_service() -> ChatService:
     """
     Factory dependency for the chat service.
     """
+    from app.services.chat_service import ChatService
+
     return ChatService()
 
 

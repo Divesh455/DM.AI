@@ -2,15 +2,20 @@
 Retriever abstraction for the portfolio knowledge base.
 Wraps FAISS retrieval so the chat service can ask for relevant chunks without storage details.
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from langchain_core.documents import Document
 from loguru import logger
 
 from app.core.config import settings
 from app.core.exceptions import ValidationException
-from app.rag.embeddings import EmbeddingFactory
-from app.rag.vectorstore import VectorStoreManager
+
+if TYPE_CHECKING:
+    from app.rag.embeddings import EmbeddingFactory
+    from app.rag.vectorstore import VectorStoreManager
 
 
 @dataclass(slots=True)
@@ -37,8 +42,17 @@ class PortfolioRetriever:
         """
         Accepts RAG dependencies via constructor injection for easier testing.
         """
-        self._embedding_factory = embedding_factory or EmbeddingFactory()
-        self._vector_store_manager = vector_store_manager or VectorStoreManager()
+        if embedding_factory is None:
+            from app.rag.embeddings import EmbeddingFactory
+
+            embedding_factory = EmbeddingFactory()
+        if vector_store_manager is None:
+            from app.rag.vectorstore import VectorStoreManager
+
+            vector_store_manager = VectorStoreManager()
+
+        self._embedding_factory = embedding_factory
+        self._vector_store_manager = vector_store_manager
         self._top_k = top_k or settings.RAG_TOP_K
 
     def get_relevant_documents(self, query: str) -> list[Document]:

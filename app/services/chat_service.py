@@ -2,8 +2,11 @@
 Chat service layer for DM.AI.
 Coordinates retrieval and LLM generation without placing business logic inside the API route.
 """
+from __future__ import annotations
+
 from collections.abc import Sequence
 from time import perf_counter
+from typing import TYPE_CHECKING
 
 from langchain_core.documents import Document
 from loguru import logger
@@ -11,8 +14,10 @@ from loguru import logger
 from app.core.exceptions import ValidationException
 from app.core.prompts import INSUFFICIENT_CONTEXT_REPLY
 from app.models.schemas.chat import ChatResponse
-from app.rag.retriever import PortfolioRetriever
 from app.services.llm_service import LLMService
+
+if TYPE_CHECKING:
+    from app.rag.retriever import PortfolioRetriever
 
 
 class ChatService:
@@ -28,7 +33,12 @@ class ChatService:
         """
         Injects retrieval and generation dependencies so the service can be tested in isolation.
         """
-        self._retriever = retriever or PortfolioRetriever()
+        if retriever is None:
+            from app.rag.retriever import PortfolioRetriever
+
+            retriever = PortfolioRetriever()
+
+        self._retriever = retriever
         self._llm_service = llm_service or LLMService()
 
     def answer_question(self, message: str) -> ChatResponse:
